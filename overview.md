@@ -1,0 +1,29 @@
+The goal of this project is to develop a grocery list application with the following key features:
+
+- **Receipt Recognition:** Implement AI/computer vision capabilities to accurately scan and interpret printed invoices and receipts. The system should extract the following information:
+    - Original item name as it appears on the receipt.
+    - A generalized item name (e.g., converting "BrandX Sardines in Olive Oil 120g" to "sardines in olive oil").
+    - Weight or volume of the item, if specified.
+    - Price of the item.
+    - Quantity purchased.
+    - Store name.
+    - Date of purchase.
+- An accuracy target of 95% is set for the correct extraction of information (item names, prices, quantities, etc.) from receipts.
+- Each extracted product should be linked to its source receipt.
+- The system should allow users to list all receipts associated with a particular store.
+- Original scanned receipt images or files should be stored in a designated Google Drive folder.
+- **Unified Grocery List:** Consolidate items from various receipts into a single, comprehensive grocery list. Duplicate or similar items from different receipts will be linked and displayed as a single entry based on their "generalized item name". For example, if "BrandX Milk 1L" and "BrandX Milk" (generalized to "milk") appear on different receipts, they would be grouped under the generalized name "milk" in the unified list, potentially with summed quantities or an indication of multiple purchases.
+- **Price Tracking and Comparison:** Crawl online data from multiple supermarkets and utilize scanned receipt data to build and maintain a dynamic price table. This table will display the cost and availability of each product across different retailers. Price information will be prioritized based on the recency of the data source (i.e., the latest information, whether from a receipt or web crawl, will be considered the most accurate).
+    - Initial supermarket targets for web crawling include:
+        - Pingo Doce (Matosinhos - Brito e Cunha): https://www.pingodoce.pt/lojas/matosinhos-brito-e-cunha/
+        - Pingo Doce (Matosinhos - D. Afonso Henriques): https://www.pingodoce.pt/lojas/matosinhos-d-afonso-henriques/
+        - Continente Bom Dia (Matosinhos Sul): https://feed.continente.pt/lojas/continente-bom-dia-matosinhos-sul
+        - Mercadona (Matosinhos): https://www.mercadona.pt/pt/atualidade/mercadona-abre-hoje-supermercado-em-matosinhos/news
+        - Lidl (Matosinhos - Rua Roberto Ivens): https://www.lidl.pt/s/pt-PT/pesquisa-de-loja/matosinhos/rua-roberto-ivens-898/
+- **Smart Shopping Assistance:** Provide users with an intelligent grocery list that offers the following functionalities, particularly when they are physically in a supermarket:
+    - **Store-Specific Availability:** Highlight items available in the user's current supermarket.
+    - **Cheapest Options:** Identify and suggest the most cost-effective choices for selected products.
+    - **User Preferences:** Allow users to mark and easily find their preferred product brands or variations.
+    - **Purchase Frequency Insights:** Offer data-driven insights into purchasing habits. Users should be able to:
+        - Inquire about the typical purchase frequency of a specific item (e.g., "How often do I buy milk?").
+        - Ask for suggestions or if an item is needed (e.g., "Do I need to buy milk now?"), with the app potentially adding it to the current grocery list based on historical data.
