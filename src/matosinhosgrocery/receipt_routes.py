@@ -1,5 +1,5 @@
 import logging
-from typing import Optional
+from typing import Optional, List
 import os
 
 from fastapi import APIRouter, File, UploadFile, Depends, HTTPException, Form
@@ -9,25 +9,45 @@ from matosinhosgrocery.services.receipt_processing_service import (
     ReceiptProcessingService,
 )
 from matosinhosgrocery.database.connection import get_async_db_session
-
-# from matosinhosgrocery.database.models import Receipt # For Pydantic model if you create one
+from matosinhosgrocery.schemas.receipt_schemas import ReceiptResponse, ProductResponse
+from matosinhosgrocery.database.models import Receipt as DBReceipt
 
 logger = logging.getLogger(__name__)
 receipt_api_router = APIRouter()  # This is the router instance
 
 
-@receipt_api_router.post(
-    "/receipts/upload", response_model=None
-)  # Define Pydantic model later
+def convert_db_receipt_to_response(db_receipt: DBReceipt) -> ReceiptResponse:
+    """Converts a SQLAlchemy Receipt model to a ReceiptResponse Pydantic model."""
+    product_responses: List[ProductResponse] = []
+    if db_receipt.product_entries:
+        for entry in db_receipt.product_entries:
+            product_responses.append(
+                ProductResponse(
+                    name=entry.original_name,
+                    generalized_name=entry.generalized_name,
+                    cost=entry.price_per_unit,
+                    tags=entry.tags if entry.tags else [],
+                )
+            )
+
+    return ReceiptResponse(
+        file_name=db_receipt.gdrive_filename if db_receipt.gdrive_filename else "N/A",
+        gdrive_url=db_receipt.gdrive_file_url,
+        products=product_responses,
+    )
+
+
+@receipt_api_router.post("/receipts/upload", response_model=ReceiptResponse)
 async def upload_receipt_file(
     file: UploadFile = File(...),
     original_file_name: Optional[str] = Form(None),
     user_identifier: Optional[str] = Form(None),
     db: AsyncSession = Depends(get_async_db_session),
-):
+) -> ReceiptResponse:
     """
     Uploads a receipt file (image or PDF) for processing.
     This endpoint uses the application's real OpenAI and Google Drive clients.
+    Returns structured receipt data including product details.
     """
     logger.info(
         f"API /receipts/upload called. File: {file.filename}, User: {user_identifier}, Original Form Filename: {original_file_name}"
@@ -86,25 +106,16 @@ async def upload_receipt_file(
     receipt_service = ReceiptProcessingService(db_session=db, bot_instance=None)
 
     try:
-        processed_receipt = await receipt_service.process_receipt_from_uploaded_file(
-            file_content=file_content,
-            original_file_name=service_input_filename,
-            user_identifier=user_identifier,
+        processed_db_receipt: DBReceipt = (
+            await receipt_service.process_receipt_from_uploaded_file(
+                file_content=file_content,
+                original_file_name=service_input_filename,
+                user_identifier=user_identifier,
+            )
         )
-        # For a proper API, convert SQLAlchemy model to a Pydantic model for the response
-        # For now, returning a dict.
-        return {
-            "id": processed_receipt.id,
-            "store_name": processed_receipt.store_name,
-            "purchase_date": str(processed_receipt.purchase_date)
-            if processed_receipt.purchase_date
-            else None,
-            "total_amount": processed_receipt.total_amount,
-            "gdrive_file_id": processed_receipt.gdrive_file_id,
-            "gdrive_file_url": processed_receipt.gdrive_file_url,
-            "product_entries_count": len(processed_receipt.product_entries),
-            "message": "Receipt processed successfully.",
-        }
+        # Convert SQLAlchemy model to Pydantic response model
+        return convert_db_receipt_to_response(processed_db_receipt)
+
     except ValueError as ve:
         logger.error(
             f"ValueError during API receipt processing for {service_input_filename}: {ve}",
