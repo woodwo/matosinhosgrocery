@@ -14,6 +14,9 @@ from matosinhosgrocery.bot.core import (
 # from matosinhosgrocery.database.connection import create_db_and_tables # Import the function
 from matosinhosgrocery.config import settings # Import settings for logging
 
+# UPDATED: Import receipt_routes directly from matosinhosgrocery package
+from matosinhosgrocery import receipt_routes
+
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
@@ -74,6 +77,9 @@ app = FastAPI(
     description="A Telegram bot to help manage your grocery receipts and lists in Matosinhos.",
     lifespan=lifespan
 )
+
+# NEW: Include the receipt_api_router
+app.include_router(receipt_routes.receipt_api_router, prefix="/api/v1", tags=["Receipts"])
 
 @app.get("/health", tags=["Health"])
 async def health_check():
