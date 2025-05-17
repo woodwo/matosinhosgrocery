@@ -158,3 +158,9 @@ dmypy.json
 
 # PyPI configuration file
 .pypirc
+
+# general files
+*.jpg
+*.apps.googleusercontent.com.json
+*.json
+*.db
